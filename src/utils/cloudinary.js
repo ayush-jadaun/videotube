@@ -1,30 +1,24 @@
 import { v2 as cloudinary } from "cloudinary";
-import fs from "fs";
+import fs from "fs/promises"; // Using the promise-based fs module
 
-(async function () {
-    cloudinary.config({
-        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-        api_key: process.env.CLOUDINARY_API_KEY,
-        api_secret: process.env.CLOUDINARY_API_SECRET,
-    });
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-    const uploadOnCloudinary = async (localFilePath) => {
-        try {
-            const result = await cloudinary.uploader.upload(localFilePath);
-            console.log("Upload successful:", result);
+export const uploadOnCloudinary = async (localFilePath) => {
+  try {
+    const result = await cloudinary.uploader.upload(localFilePath);
+    console.log("Upload successful:", result);
 
-            fs.unlinkSync(localFilePath, (err) => {
-                if (err) {
-                    console.error("Error deleting the file:", err);
-                } else {
-                    console.log("File deleted successfully");
-                }
-            });
-        } catch (error) {
-            console.error("Error uploading to Cloudinary:", error);
-        }
-    };
+    // Delete the local file after uploading
+    await fs.unlink(localFilePath);
+    console.log("File deleted successfully");
 
-
-    module.exports = { uploadOnCloudinary };
-})();
+    return result; // Return the result for further processing
+  } catch (error) {
+    console.error("Error uploading to Cloudinary:", error);
+    throw error; // Rethrow the error to handle it in the calling function
+  }
+};

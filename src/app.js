@@ -3,6 +3,8 @@ import cors from "cors";
 import dotenv from "dotenv"; 
 import cookieParser from "cookie-parser";
 import healthCheckRouter from "./routes/healthCheck.routes.js";
+import userRouter from "./routes/user.routes.js"
+import { errorHandler } from "./middlewares/error.middlewares.js";
 
 
 dotenv.config();
@@ -24,5 +26,7 @@ app.use(express.static("public"));
 
 // Routes
 app.use("/api/v1/healthCheck", healthCheckRouter);
+app.use("/api/v1/users", userRouter)
+app.use(errorHandler)
 
 export { app };
