@@ -176,4 +176,131 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   }
 });
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+  const { userId, currentPassword, newPassword } = req.body;
+
+  if (!userId || !currentPassword || !newPassword) {
+    throw new ApiError(
+      400,
+      "User ID, current password, and new password are required"
+    );
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+  if (!isPasswordValid) {
+    throw new ApiError(401, "Current password is incorrect");
+  }
+
+  user.password = await bcrypt.hash(newPassword, 10);
+  await user.save();
+
+  res.status(200).json({
+    message: "Password changed successfully",
+  });
+});
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+  const { userId } = req.body;
+
+  if (!userId) {
+    throw new ApiError(400, "User ID is required");
+  }
+
+  const user = await User.findById(userId).select("-password -refreshToken");
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  res.status(200).json({
+    user,
+  });
+});
+
+const updateAccountDetails = asyncHandler(async (req, res) => {
+  const { userId, updates } = req.body;
+
+  if (!userId || !updates) {
+    throw new ApiError(400, "User ID and updates are required");
+  }
+
+  const user = await User.findByIdAndUpdate(userId, updates, {
+    new: true,
+  }).select("-password -refreshToken");
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  res.status(200).json({
+    message: "Account details updated successfully",
+    user,
+  });
+});
+
+const updateUserAvatar = asyncHandler(async (req, res) => {
+  const { userId } = req.body;
+  const avatarLocalPath = req.file?.path;
+
+  if (!userId || !avatarLocalPath) {
+    throw new ApiError(400, "User ID and avatar image are required");
+  }
+
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
+
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { avatar: avatar.url },
+    { new: true }
+  ).select("-password -refreshToken");
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  res.status(200).json({
+    message: "User avatar updated successfully",
+    user,
+  });
+});
+
+const updateUserCoverImage = asyncHandler(async (req, res) => {
+  const { userId } = req.body;
+  const coverLocalPath = req.file?.path;
+
+  if (!userId || !coverLocalPath) {
+    throw new ApiError(400, "User ID and cover image are required");
+  }
+
+  const coverImage = await uploadOnCloudinary(coverLocalPath);
+
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { coverImage: coverImage.url },
+    { new: true }
+  ).select("-password -refreshToken");
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  res.status(200).json({
+    message: "User cover image updated successfully",
+    user,
+  });
+});
+
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  changeCurrentPassword,
+  getCurrentUser,
+  updateAccountDetails,
+  updateUserAvatar,
+  updateUserCoverImage,
+};
+
+
