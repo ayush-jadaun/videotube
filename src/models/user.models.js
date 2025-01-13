@@ -76,7 +76,7 @@ userSchema.methods.generateAccessToken = function () {
     id: this._id,
     username: this.username,
     email: this.email,
-    fullName:this.fullName,
+    fullName: this.fullName,
   };
 
   const secretKey = process.env.JWT_SECRET_KEY;
@@ -84,5 +84,21 @@ userSchema.methods.generateAccessToken = function () {
 
   return jwt.sign(payload, secretKey, { expiresIn });
 };
+
+userSchema.methods.generateRefreshToken = function () {
+  const payload = {
+    id: this._id,
+    username: this.username,
+    email: this.email,
+    fullName: this.fullName,
+  };
+
+  const secretKey = process.env.JWT_REFRESH_SECRET_KEY;
+  const expiresIn = "7d"; // Refresh token valid for 7 days
+
+  return jwt.sign(payload, secretKey, { expiresIn });
+};
+
+
 
 export const User = mongoose.model("User", userSchema);
